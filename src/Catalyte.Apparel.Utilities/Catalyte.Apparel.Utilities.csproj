@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="HttpResponseExceptions\NewFolder\**" />
+    <EmbeddedResource Remove="HttpResponseExceptions\NewFolder\**" />
+    <None Remove="HttpResponseExceptions\NewFolder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="HttpResponseExceptions\Class1.cs" />
+    <Compile Remove="HttpResponseExceptions\Class2.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.22.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.56.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.28" />
+    <PackageReference Include="Swashbuckle.Core" Version="5.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Catalyte.Apparel.DTOs\Catalyte.Apparel.DTOs.csproj" />
+  </ItemGroup>
+
+</Project>

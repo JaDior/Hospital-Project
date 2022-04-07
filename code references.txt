@@ -1,0 +1,404 @@
+/optimize-prime-api (OP-7-refactor-getallpurchasesasync)
+*****************************************************************************
+SELECT * /* public."Purchases"."BillingEmail", public."Purchases"."Id"  */
+FROM public."Purchases"
+
+*************************************************
+catalyte.apparel.DTOs folder
+	purchases folder
+		PurchaseDTO.cs
+
+namespace Catalyte.Apparel.DTOs.Purchases
+{
+     /// Describes a data transfer object for a purchase transaction.
+     public class PurchaseDTO
+    {
+        public int Id { get; set; }
+
+        public DateTime OrderDate { get; set; }
+
+        public DeliveryAddressDTO DeliveryAddress { get; set; }
+
+        public BillingAddressDTO BillingAddress { get; set; }
+
+        public CreditCardDTO CreditCard { get; set; }
+
+        public List<LineItemDTO> LineItems { get; set; }
+    }
+}
+
+****************************************************     
+catalyte.apparel.API folder
+	controllers folder
+	PurchasesController.cs
+namespace Catalyte.Apparel.API.Controllers
+{
+    /// The PurchasessController exposes endpoints for purchase related actions.
+    [ApiController]
+    [Route("/purchases")]
+    public class PurchasesController : ControllerBase
+    {
+        private readonly ILogger<PurchasesController> _logger;
+        private readonly IPurchaseProvider _purchaseProvider;
+        private readonly IMapper _mapper;
+
+	[HttpGet]
+        public async Task<ActionResult<List<PurchaseDTO>>> GetAllPurchasesAsync()
+        {
+            _logger.LogInformation("Request received for GetAllPurchasesAsync");
+
+            var purchases = await _purchaseProvider.GetAllPurchasesAsync();
+            var purchaseDTOs = _mapper.MapPurchasesToPurchaseDtos(purchases);
+
+            return Ok(purchaseDTOs);
+        }
+***************************************
+
+catalyte.apparel.data folder
+	ServicesConfigurtion.cs
+namespace Catalyte.Apparel.Data
+{
+    /// This class provides configuration options for services and context.
+    public static class ServicesConfiguration
+    {
+        public static IServiceCollection AddDataServices(this IServiceCollection services, IConfiguration config)
+        {
+            services.AddDbContext<ApparelCtx>(options =>
+                options.UseNpgsql(config.GetConnectionString("CatalyteApparel")));
+
+            services.AddScoped<IApparelCtx>(provider => provider.GetService<ApparelCtx>());
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+
+            return services;
+*******************************************************
+catalyte.apparel.DTOs folder
+	users folder
+		userDTO.cs
+namespace Catalyte.Apparel.DTOs
+{
+    /// Describes a data transfer object for a user.
+    public class UserDTO
+    {
+        public int Id { get; set; }
+
+        public DateTime DateCreated { get; set; }
+
+        public DateTime DateModified { get; set; }
+
+        public string Email { get; set; }
+
+        public string Role { get; set; }
+
+        public string FirstName { get; set; }
+
+        public string LastName { get; set; }
+    }
+}
+***************************************************
+Catalyte.Apparel.Providers folder
+	Interfaces folder
+		IPurchaseProvider.cs
+namespace Catalyte.Apparel.Providers.Interfaces
+{
+    /// This interface provides an abstraction layer for purchase related service methods.
+    public interface IPurchaseProvider
+    {
+        Task<IEnumerable<Purchase>> GetAllPurchasesAsync();
+        Task<Purchase> CreatePurchasesAsync(Purchase model);
+    }
+}
+***********************************************************
+Catalyte.Apparel/Providers folder
+	Providers folder
+		PUrchaseProvider.cs
+	/// <summary>
+        /// Retrieves all purchases from the database.
+        /// </summary>
+        /// <param name="page">Number of pages.</param>
+        /// <param name="pageSize">How many purchases per page.</param>
+        /// <returns>All purchases.</returns>
+        public async Task<IEnumerable<Purchase>> GetAllPurchasesAsync()
+        {
+            List<Purchase> purchases;
+
+            try
+            {
+                purchases = await _purchaseRepository.GetAllPurchasesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+
+            return purchases;
+        }
+
+******************************************************
+catalyte.apparel.data folder
+	Repostories folder
+		UserRepository
+			UserRepository.cs
+namespace Catalyte.Apparel.Data.Repositories
+{
+    /// This class handles methods for making requests to the user repository.
+    public class UserRepository : IUserRepository
+    {
+        private readonly IApparelCtx _ctx;
+/// I deleted a bunch of stuff I wasn't interested in
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _ctx.Users.AsQueryable().WhereUserEmailEquals(email).SingleOrDefaultAsync();
+        }
+****************************************************
+catalyte.apparel.data folder
+	Filteres Folder
+		UserFilter.cs
+
+namespace Catalyte.Apparel.Data.Filters
+{
+     /// Filter collection for user context queries.
+     public static class UserFilter
+    {
+        public static IQueryable<User> WhereUserEmailEquals(this IQueryable<User> users, string email)
+        {
+            return users.Where(u => u.Email == email).AsQueryable();
+        }
+    }
+}
+****************************************************
+catalyte.apparel.Data folder
+	Model folder
+		PUrchase.cs
+
+namespace Catalyte.Apparel.Data.Model
+{
+    /// <summary>
+    /// Describes a purchase object that holds the information for a transaction.
+    /// </summary>
+    public class Purchase : BaseEntity
+    {
+        public DateTime OrderDate { get; set; }
+
+        [MaxLength(100)]
+        public string BillingStreet { get; set; }
+
+        [MaxLength(100)]
+        public string BillingStreet2 { get; set; }
+
+        [MaxLength(50)]
+        public string BillingCity { get; set; }
+
+        [MaxLength(2)]
+        public string BillingState { get; set; }
+
+        [MaxLength(10)]
+        public string BillingZip { get; set; }
+
+        [MaxLength(100)]
+        public string BillingEmail { get; set; }
+
+        [MaxLength(15)]
+        public string BillingPhone { get; set; }
+
+        [MaxLength(50)]
+        public string DeliveryFirstName { get; set; }
+
+        [MaxLength(50)]
+        public string DeliveryLastName { get; set; }
+
+        [MaxLength(100)]
+        public string DeliveryStreet { get; set; }
+
+        [MaxLength(100)]
+        public string DeliveryStreet2 { get; set; }
+
+        [MaxLength(50)]
+        public string DeliveryCity { get; set; }
+
+        [MaxLength(2)]
+        public string DeliveryState { get; set; }
+
+        [MaxLength(10)]
+        public int DeliveryZip { get; set; }
+
+        [MaxLength(16)]
+        public string CardNumber { get; set; }
+
+        public int CVV { get; set; }
+
+        [MaxLength(5)]
+        public string Expiration { get; set; }
+
+        [MaxLength(100)]
+        public string CardHolder { get; set; }
+
+        public ICollection<LineItem> LineItems { get; set; }
+    }
+}
+
+**************************************************************
+Catalyte.Apparel.API folder
+	Mapper folder
+		MapperProfile.cs
+namespace Catalyte.Apparel.API
+{
+    public class MapperProfile : Profile
+    {
+        public MapperProfile()
+        {
+            CreateMap<Product, ProductDTO>().ReverseMap();
+            CreateMap<CreatePurchaseDTO, Purchase>();
+
+            CreateMap<Purchase, PurchaseDTO>();
+            CreateMap<Purchase, DeliveryAddressDTO>().ReverseMap();
+            CreateMap<Purchase, CreditCardDTO>().ReverseMap();
+            CreateMap<Purchase, BillingAddressDTO>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.BillingEmail))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.BillingPhone))
+                .ReverseMap();
+            
+            CreateMap<LineItem, LineItemDTO>().ReverseMap();
+            
+            CreateMap<User, UserDTO>().ReverseMap();
+        }
+
+    }
+}
+********************************************************************
+Catalyte.Apparel.Data folder
+	SeedData folder
+		SeedData.cs
+namespace Catalyte.Apparel.Data.Context
+{
+    public static class Extensions
+    {
+        /// <summary>
+        /// Produces a set of seed data to insert into the database on startup.
+        /// </summary>
+        /// <param name="modelBuilder">Used to build model base DbContext.</param>
+        public static void SeedData(this ModelBuilder modelBuilder)
+        {
+            var productFactory = new ProductFactory();
+
+            modelBuilder.Entity<Product>().HasData(productFactory.GenerateRandomProducts(1000));
+
+            var lineItem = new LineItem()
+            {
+                Id = 1,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                ProductId = 1,
+                Quantity = 1,
+                PurchaseId = 1
+            };
+
+            modelBuilder.Entity<LineItem>().HasData(lineItem);
+
+            var purchase = new Purchase()
+            {
+                Id = 1,
+                BillingCity = "Atlanta",
+                BillingEmail = "customer@home.com",
+                BillingPhone = "(714) 345-8765",
+                BillingState = "GA",
+                BillingStreet = "123 Main",
+                BillingStreet2 = "Apt A",
+                BillingZip = "31675",
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                DeliveryCity = "Birmingham",
+                DeliveryState = "AL",
+                DeliveryStreet = "123 Hickley",
+                DeliveryZip = 43690,
+                DeliveryFirstName = "Max",
+                DeliveryLastName = "Space",
+                CardHolder = "Max Perkins",
+                CardNumber = "1435678998761234",
+                Expiration = "11/21",
+                CVV = 456,
+                OrderDate = new DateTime(2021, 5, 4)
+            };
+
+            modelBuilder.Entity<Purchase>().HasData(purchase);
+        }
+    }
+}
+*****************************************************************
+Catalyte.Apparel.API folder
+	Mapper folder
+		MapperExtensions.cs
+
+namespace Catalyte.Apparel.API.DTOMappings
+{
+    public static class MapperExtensions
+    {
+
+        public static IEnumerable<PurchaseDTO> MapPurchasesToPurchaseDtos(this IMapper mapper, IEnumerable<Purchase> purchases)
+        {
+            return purchases
+                .Select(x => mapper.MapPurchaseToPurchaseDto(x))
+                .ToList();
+        }
+
+        /// Helper method to build model for a purchase DTO.
+        /// <param name="purchase">The purchase to be persisted.</param>
+        /// <returns>A purchase DTO.</returns>
+        public static PurchaseDTO MapPurchaseToPurchaseDto(this IMapper mapper, Purchase purchase)
+        {
+            return new PurchaseDTO()
+            {
+                Id = purchase.Id,
+                OrderDate = purchase.OrderDate,
+                LineItems = mapper.Map<List<LineItemDTO>>(purchase.LineItems),
+                DeliveryAddress = mapper.Map<DeliveryAddressDTO>(purchase),
+                BillingAddress = mapper.Map<BillingAddressDTO>(purchase),
+                CreditCard = mapper.Map<CreditCardDTO>(purchase)
+            };
+        }
+
+        public static Purchase MapCreatePurchaseDtoToPurchase(this IMapper mapper, CreatePurchaseDTO purchaseDTO)
+        {
+            var purchase = new Purchase
+            {
+                OrderDate = DateTime.UtcNow,
+            };
+            purchase = mapper.Map(purchaseDTO.DeliveryAddress, purchase);
+            purchase = mapper.Map(purchaseDTO.BillingAddress, purchase);
+            purchase = mapper.Map(purchaseDTO.CreditCard, purchase);
+            purchase.LineItems = mapper.Map(purchaseDTO.LineItems, purchase.LineItems);
+
+            return purchase;
+        }
+    }
+}
+
+***************************************************************************
+{
+    "PurchaseDTO":{
+        "Id" : 1,
+        "BillingAddressDTO":{
+            "BillingCity" : "Atlanta",
+                "BillingEmail" : "customer@home.com",
+                "BillingPhone" : "(714) 345-8765",
+                "BillingState" : "GA",
+                "BillingStreet" : "123 Main",
+                "BillingStreet2" : "Apt A",
+                "BillingZip" : 31675
+        },
+        "CreditCardDTO":{
+                "CardHolder" : "Max Perkins",
+                "CardNumber" : "1435678998761234",
+                "Expiration" : "11/21",
+                "CVV" : 456
+        }
+    }
+}
+*******************************************************************************
+
+
+
+
+
