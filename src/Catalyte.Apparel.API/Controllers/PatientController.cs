@@ -57,5 +57,16 @@ namespace Catalyte.Apparel.API.Controllers
 
             return Created("/patient", patientDTO);
         }
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdatePatientAsync(int id, [FromBody] PatientDTO patientToUpdate)
+        {
+            _logger.LogInformation("Request received for update product");
+
+            var patient = _mapper.Map<Patient>(patientToUpdate);
+            var updatedPatient = await _patientProvider.UpdatePatientAsync(id, patient);
+            var patientDTO = _mapper.Map<PatientDTO>(updatedPatient);
+
+            return Ok(patientDTO);
+        }
     }
 }

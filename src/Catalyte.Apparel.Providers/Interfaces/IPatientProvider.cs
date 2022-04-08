@@ -12,5 +12,6 @@ namespace Catalyte.Apparel.Providers.Interfaces
         Task<Patient> GetPatientById(int id);
         Task<IEnumerable<Patient>> GetPatientsAsync();
         Task<Patient> CreatePatientAsync(Patient patient);
+        Task<Patient> UpdatePatientAsync(int id, Patient patient);
     }
 }

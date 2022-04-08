@@ -103,7 +103,68 @@ namespace Catalyte.Apparel.Providers.Providers
             }
 
             return savedPatient;
+        }
+        public async Task<Patient> UpdatePatientAsync(int id, Patient updatedPatient)
+        {
+            // UPDATES Product
+            Patient existingPatient;
 
+            try
+            {
+                existingPatient = await _patientRepository.GetPatientById(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+
+            if (existingPatient == default || existingPatient.Id != id)
+            {
+                _logger.LogInformation($"Product with id: {id} does not exist.");
+                throw new NotFoundException($"Product with id:{id} not found.");
+            }
+            Patient patientWithMatchingEmail;
+            try
+            {
+                patientWithMatchingEmail = await _patientRepository.GetPatientByEmailAsync(updatedPatient.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+
+            if (patientWithMatchingEmail != existingPatient)
+            {
+                _logger.LogError("Email is taken.");
+                throw new ConflictException("Email is taken");
+            }
+            existingPatient.First_Name = updatedPatient.First_Name;
+            existingPatient.Last_Name = updatedPatient.Last_Name;
+            existingPatient.SSN = updatedPatient.SSN;
+            existingPatient.Email = updatedPatient.Email;
+            existingPatient.Street = updatedPatient.Street;
+            existingPatient.City = updatedPatient.City;
+            existingPatient.State = updatedPatient.State;
+            existingPatient.ZipCode = updatedPatient.ZipCode;
+            existingPatient.Age = updatedPatient.Age;
+            existingPatient.Height = updatedPatient.Height;
+            existingPatient.Insurance = updatedPatient.Insurance;
+            existingPatient.Gender = updatedPatient.Gender;
+            existingPatient.DateCreated = updatedPatient.DateCreated;
+            existingPatient.DateModified = DateTime.UtcNow;
+            try
+            {
+                await _patientRepository.UpdatePatientAsync(existingPatient);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+
+            return existingPatient;
         }
     }
 }

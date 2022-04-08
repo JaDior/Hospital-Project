@@ -13,5 +13,6 @@ namespace Catalyte.Apparel.Data.Interfaces
         Task<IEnumerable<Patient>> GetPatientsAsync();
         Task<Patient> GetPatientByEmailAsync(string email);
         Task<Patient> CreatePatientAsync(Patient patient);
+        Task<Patient> UpdatePatientAsync(Patient patient);
     }
 }

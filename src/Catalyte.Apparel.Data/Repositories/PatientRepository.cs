@@ -39,5 +39,12 @@ namespace Catalyte.Apparel.Data.Repositories
 
             return patient;
         }
+        public async Task<Patient> UpdatePatientAsync(Patient patient)
+        {
+            _ctx.Patients.Update(patient);
+            await _ctx.SaveChangesAsync();
+
+            return patient;
+        }
     }
 }
