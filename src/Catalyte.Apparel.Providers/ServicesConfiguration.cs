@@ -14,7 +14,7 @@ namespace Catalyte.Apparel.Providers
             services.AddScoped<IProductProvider, ProductProvider>();
             services.AddScoped<IUserProvider, UserProvider>();
             services.AddScoped<IPatientProvider, PatientProvider>();
-
+            services.AddScoped<IEncounterProvider, EncounterProvider>();
             return services;
         }
     }

@@ -46,5 +46,11 @@ namespace Catalyte.Apparel.Data.Repositories
 
             return patient;
         }
+
+        public async Task DeletePatientAsync(Patient patientToDelete)
+        {
+            _ctx.Patients.Remove(patientToDelete);
+            await _ctx.SaveChangesAsync();
+        }
     }
 }

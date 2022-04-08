@@ -22,6 +22,7 @@ namespace Catalyte.Apparel.Data
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<IEncounterRepository, EncounterRepository>();
 
             return services;
 

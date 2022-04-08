@@ -8,7 +8,6 @@ namespace Catalyte.Apparel.DTOs.Patients
 {
     public class PatientDTO
     {
-        public int Id { get; set; }
         public string First_Name { get; set; }
         public string Last_Name { get; set; }   
         public string SSN { get; set; }

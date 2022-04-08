@@ -15,11 +15,13 @@ namespace Catalyte.Apparel.Providers.Providers
     {
         private readonly ILogger<PatientProvider> _logger;
         private readonly IPatientRepository _patientRepository;
+        private readonly IEncounterRepository _encounterRepository;
 
-        public PatientProvider(IPatientRepository patientRepository, ILogger<PatientProvider> logger)
+        public PatientProvider(ILogger<PatientProvider> logger, IPatientRepository patientRepository, IEncounterRepository encounterRepository)
         {
             _logger = logger;
             _patientRepository = patientRepository;
+            _encounterRepository = encounterRepository;
         }
 
         public async Task<Patient> GetPatientById(int id)
@@ -121,8 +123,8 @@ namespace Catalyte.Apparel.Providers.Providers
 
             if (existingPatient == default || existingPatient.Id != id)
             {
-                _logger.LogInformation($"Product with id: {id} does not exist.");
-                throw new NotFoundException($"Product with id:{id} not found.");
+                _logger.LogInformation($"Patient with id: {id} does not exist.");
+                throw new NotFoundException($"Patient with id:{id} not found.");
             }
             Patient patientWithMatchingEmail;
             try
@@ -135,7 +137,7 @@ namespace Catalyte.Apparel.Providers.Providers
                 throw new ServiceUnavailableException("There was a problem connecting to the database.");
             }
 
-            if (patientWithMatchingEmail != existingPatient)
+            if (patientWithMatchingEmail != null)
             {
                 _logger.LogError("Email is taken.");
                 throw new ConflictException("Email is taken");
@@ -165,6 +167,41 @@ namespace Catalyte.Apparel.Providers.Providers
             }
 
             return existingPatient;
+        }
+
+        public async Task DeletePatientAsync(int id)
+        {
+            IEnumerable<Encounter> patientEncounters;
+            try
+            {
+                patientEncounters = await _encounterRepository.GetEncountersByPatientId(id);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+            if (patientEncounters.Count() != 0)
+            {
+                _logger.LogInformation($"Patient with id: {id} has encounters.");
+                throw new ConflictException($"Patient with id:{id} has encounters.");
+            }
+            Patient patientToDelete;
+            try
+            {
+                patientToDelete = await _patientRepository.GetPatientById(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new ServiceUnavailableException("There was a problem connecting to the database.");
+            }
+            if (patientToDelete == null)
+            {
+                _logger.LogInformation($"Patient with id: {id} does not exist");
+                throw new NotFoundException($"Patient with id: {id} does not exist");
+            }
+            await _patientRepository.DeletePatientAsync(patientToDelete);
         }
     }
 }
