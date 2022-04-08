@@ -21,6 +21,7 @@ namespace Catalyte.Apparel.Data
             services.AddScoped<IApparelCtx>(provider => provider.GetService<ApparelCtx>());
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IPatientRepository, PatientRepository>();
 
             return services;
 

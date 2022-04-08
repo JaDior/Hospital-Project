@@ -15,6 +15,8 @@ namespace Catalyte.Apparel.Data.Context
 
         public DbSet<User> Users { get; set; }
 
+        public DbSet<Patient> Patients  { get; set; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken());
     }
 
